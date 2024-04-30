@@ -5,6 +5,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # MIT License for more details.
+import os
 
 import numpy as np
 from tqdm import tqdm
@@ -61,6 +62,10 @@ if __name__ == "__main__":
     np.random.seed(random_seed)
 
     print('Initializing logger...')
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+
     logger = SummaryWriter(log_dir=log_dir)
 
     print('Initializing data loaders...')
