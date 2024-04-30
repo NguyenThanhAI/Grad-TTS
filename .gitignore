@@ -26,6 +26,7 @@ checkpoint
 #*.txt
 *.zip
 *.jsonl
+*.c
 
 generated_data/
 saved_model/
