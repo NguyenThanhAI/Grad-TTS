@@ -52,7 +52,7 @@ def get_args():
     parser.add_argument("--n_enc_channels", type=int, default=params.n_enc_channels)
     parser.add_argument("--filter_channels", type=int, default=params.filter_channels)
     parser.add_argument("--filter_channels_dp", type=int, default=params.filter_channels_dp)
-    parser.add_argument("--n_enc_layers", type=int, default=params.n_enc_channels)
+    parser.add_argument("--n_enc_layers", type=int, default=params.n_enc_layers)
     parser.add_argument("--enc_kernel", type=int, default=params.enc_kernel)
     parser.add_argument("--enc_dropout", type=float, default=params.enc_dropout)
     parser.add_argument("--n_heads", type=int, default=params.n_heads)
