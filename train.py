@@ -7,6 +7,8 @@
 # MIT License for more details.
 import os
 
+import argparse
+
 import numpy as np
 from tqdm import tqdm
 
@@ -21,45 +23,130 @@ from utils import plot_tensor, save_plot
 from text.symbols import symbols
 
 
-train_filelist_path = params.train_filelist_path
-valid_filelist_path = params.valid_filelist_path
-cmudict_path = params.cmudict_path
-add_blank = params.add_blank
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
-log_dir = params.log_dir
-n_epochs = params.n_epochs
-batch_size = params.batch_size
-out_size = params.out_size
-learning_rate = params.learning_rate
-random_seed = params.seed
 
-nsymbols = len(symbols) + 1 if add_blank else len(symbols)
-n_enc_channels = params.n_enc_channels
-filter_channels = params.filter_channels
-filter_channels_dp = params.filter_channels_dp
-n_enc_layers = params.n_enc_layers
-enc_kernel = params.enc_kernel
-enc_dropout = params.enc_dropout
-n_heads = params.n_heads
-window_size = params.window_size
+def get_args():
+    parser = argparse.ArgumentParser()
 
-n_feats = params.n_feats
-n_fft = params.n_fft
-sample_rate = params.sample_rate
-hop_length = params.hop_length
-win_length = params.win_length
-f_min = params.f_min
-f_max = params.f_max
+    parser.add_argument("--train_filelist_path", type=str, default=params.train_filelist_path)
+    parser.add_argument("--valid_filelist_path", type=str, default=params.valid_filelist_path)
+    parser.add_argument("--cmudict_path", type=str, default=params.cmudict_path)
+    parser.add_argument("--add_blank", type=str2bool, default=params.add_blank)
+    parser.add_argument("--log_dir", type=str, default=params.log_dir)
+    parser.add_argument("--n_epochs", type=int, default=params.n_epochs)
+    parser.add_argument("--batch_size", type=int, default=params.batch_size)
+    parser.add_argument("--out_size", type=int, default=params.out_size)
+    parser.add_argument("--learning_rate", type=float, default=params.learning_rate)
+    parser.add_argument("--random_seed", type=int, default=params.seed)
+    # parser.add_argument("nsymbols", type=int, default=len(symbols))
+    parser.add_argument("--n_enc_channels", type=int, default=params.n_enc_channels)
+    parser.add_argument("--filter_channels", type=int, default=params.filter_channels)
+    parser.add_argument("--filter_channels_dp", type=int, default=params.filter_channels_dp)
+    parser.add_argument("--n_enc_layers", type=int, default=params.n_enc_channels)
+    parser.add_argument("--enc_kernel", type=int, default=params.enc_kernel)
+    parser.add_argument("--enc_dropout", type=float, default=params.enc_dropout)
+    parser.add_argument("--n_heads", type=int, default=params.n_heads)
+    parser.add_argument("--window_size", type=int, default=params.window_size)
+    parser.add_argument("--n_feats", type=int, default=params.n_feats)
+    parser.add_argument("--n_fft", type=int, default=params.n_fft)
+    parser.add_argument("--sample_rate", type=int, default=params.sample_rate)
+    parser.add_argument("--hop_length", type=int, default=params.hop_length)
+    parser.add_argument("--win_length", type=int, default=params.win_length)
+    parser.add_argument("--f_min", type=int, default=params.f_min)
+    parser.add_argument("--f_max", type=int, default=params.f_max)
+    parser.add_argument("--dec_dim", type=int, default=params.dec_dim)
+    parser.add_argument("--beta_min", type=float, default=params.beta_min)
+    parser.add_argument("--beta_max", type=float, default=params.beta_max)
+    parser.add_argument("--pe_scale", type=int, default=params.pe_scale)
 
-dec_dim = params.dec_dim
-beta_min = params.beta_min
-beta_max = params.beta_max
-pe_scale = params.pe_scale
+    # parser.add_argument("--train_filelist_path", type=str, default='resources/new_file_list/ljspeech/train.txt')
+    # parser.add_argument("--valid_filelist_path", type=str, default='resources/new_file_list/ljspeech/valid.txt')
+    # parser.add_argument("--cmudict_path", type=str, default='resources/cmu_dictionary')
+    # parser.add_argument("--add_blank", type=str2bool, default=True)
+    # parser.add_argument("--log_dir", type=str, default='logs/new_exp')
+    # parser.add_argument("--n_epochs", type=int, default=10000)
+    # parser.add_argument("--batch_size", type=int, default=16)
+    # parser.add_argument("--out_size", type=int, default=172)
+    # parser.add_argument("--learning_rate", type=float, default=1e-4)
+    # parser.add_argument("--random_seed", type=int, default=37)
+    # # parser.add_argument("nsymbols", type=int, default=len(symbols))
+    # parser.add_argument("--n_enc_channels", type=int, default=192)
+    # parser.add_argument("--filter_channels", type=int, default=768)
+    # parser.add_argument("--filter_channels_dp", type=int, default=256)
+    # parser.add_argument("--n_enc_layers", type=int, default=192)
+    # parser.add_argument("--enc_kernel", type=int, default=3)
+    # parser.add_argument("--enc_dropout", type=float, default=0.1)
+    # parser.add_argument("--n_heads", type=int, default=2)
+    # parser.add_argument("--window_size", type=int, default=4)
+    # parser.add_argument("--n_feats", type=int, default=8)
+    # parser.add_argument("--n_fft", type=int, default=1024)
+    # parser.add_argument("--sample_rate", type=int, default=22050)
+    # parser.add_argument("--hop_length", type=int, default=256)
+    # parser.add_argument("--win_length", type=int, default=1024)
+    # parser.add_argument("--f_min", type=int, default=0)
+    # parser.add_argument("--f_max", type=int, default=8000)
+    # parser.add_argument("--dec_dim", type=int, default=64)
+    # parser.add_argument("--beta_min", type=float, default=0.05)
+    # parser.add_argument("--beta_max", type=float, default=20.0)
+    # parser.add_argument("--pe_scale", type=int, default=1000)
+
+    args = parser.parse_args()
+
+    return args
 
 
 if __name__ == "__main__":
+
+    args = get_args()
+
+    train_filelist_path = args.train_filelist_path
+    valid_filelist_path = args.valid_filelist_path
+    cmudict_path = args.cmudict_path
+    add_blank = args.add_blank
+
+    log_dir = args.log_dir
+    n_epochs = args.n_epochs
+    batch_size = args.batch_size
+    out_size = args.out_size
+    learning_rate = args.learning_rate
+    random_seed = args.random_seed
+
+    nsymbols = len(symbols) + 1 if add_blank else len(symbols)
+    n_enc_channels = args.n_enc_channels
+    filter_channels = args.filter_channels
+    filter_channels_dp = args.filter_channels_dp
+    n_enc_layers = args.n_enc_layers
+    enc_kernel = args.enc_kernel
+    enc_dropout = args.enc_dropout
+    n_heads = args.n_heads
+    window_size = args.window_size
+
+    n_feats = args.n_feats
+    n_fft = args.n_fft
+    sample_rate = args.sample_rate
+    hop_length = args.hop_length
+    win_length = args.win_length
+    f_min = args.f_min
+    f_max = args.f_max
+
+    dec_dim = args.dec_dim
+    beta_min = args.beta_min
+    beta_max = args.beta_max
+    pe_scale = args.pe_scale
+
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
+
+    print(train_filelist_path, valid_filelist_path, cmudict_path, add_blank, log_dir, n_epochs, batch_size, out_size, learning_rate, random_seed, n_enc_channels, filter_channels, filter_channels_dp, n_enc_layers, enc_kernel, enc_dropout, n_heads, window_size, n_feats, n_fft, sample_rate, hop_length, win_length, f_min, f_max, dec_dim, beta_min, beta_max, pe_scale)
 
     print('Initializing logger...')
 
