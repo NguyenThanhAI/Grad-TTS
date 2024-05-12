@@ -37,6 +37,7 @@ def str2bool(v):
 def get_args():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--pretrained_checkpoint", type=str, default=None)
     parser.add_argument("--train_filelist_path", type=str, default=params.train_filelist_path)
     parser.add_argument("--valid_filelist_path", type=str, default=params.valid_filelist_path)
     parser.add_argument("--cmudict_path", type=str, default=params.cmudict_path)
@@ -107,7 +108,8 @@ def get_args():
 if __name__ == "__main__":
 
     args = get_args()
-
+    
+    pretrained_checkpoint = args.pretrained_checkpoint
     train_filelist_path = args.train_filelist_path
     valid_filelist_path = args.valid_filelist_path
     cmudict_path = args.cmudict_path
@@ -166,7 +168,7 @@ if __name__ == "__main__":
     test_dataset = TextMelDataset(valid_filelist_path, cmudict_path, add_blank,
                                   n_fft, n_feats, sample_rate, hop_length,
                                   win_length, f_min, f_max)
-
+    
     print('Initializing model...')
     model = GradTTS(nsymbols, 1, None, n_enc_channels, filter_channels, filter_channels_dp, 
                     n_heads, n_enc_layers, enc_kernel, enc_dropout, window_size, 
@@ -178,6 +180,18 @@ if __name__ == "__main__":
     print('Initializing optimizer...')
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
 
+    if pretrained_checkpoint is not None:
+        print("Load checkpoint")
+        checkpoint = torch.load(pretrained_checkpoint)
+
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        epoch_done = checkpoint["epoch"]
+        iteration = checkpoint["iteration"]
+    else:
+        epoch_done = 0
+        iteration = 0
+
     print('Logging test batch...')
     test_batch = test_dataset.sample_test_batch(size=params.test_size)
     for i, item in enumerate(test_batch):
@@ -187,8 +201,8 @@ if __name__ == "__main__":
         save_plot(mel.squeeze(), f'{log_dir}/original_{i}.png')
 
     print('Start training...')
-    iteration = 0
-    for epoch in range(1, n_epochs + 1):
+    # iteration = 0
+    for epoch in range(epoch_done + 1, n_epochs + 1):
         model.train()
         dur_losses = []
         prior_losses = []
@@ -263,5 +277,10 @@ if __name__ == "__main__":
                 save_plot(attn.squeeze().cpu(), 
                           f'{log_dir}/alignment_{i}.png')
 
-        ckpt = model.state_dict()
+        # ckpt = model.state_dict()
+        ckpt = {"model_state_dict": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "epoch": epoch,
+                "iteration": iteration}
+        print("Save check point at epoch {} and iteration {}".format(epoch, iteration))
         torch.save(ckpt, f=f"{log_dir}/grad_{epoch}.pt")
