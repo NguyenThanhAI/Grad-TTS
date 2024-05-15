@@ -68,6 +68,7 @@ def get_args():
     parser.add_argument("--beta_min", type=float, default=params.beta_min)
     parser.add_argument("--beta_max", type=float, default=params.beta_max)
     parser.add_argument("--pe_scale", type=int, default=params.pe_scale)
+    parser.add_argument("--save_every", type=int, default=params.save_every)
 
     # parser.add_argument("--train_filelist_path", type=str, default='resources/new_file_list/ljspeech/train.txt')
     # parser.add_argument("--valid_filelist_path", type=str, default='resources/new_file_list/ljspeech/valid.txt')
@@ -144,6 +145,7 @@ if __name__ == "__main__":
     beta_min = args.beta_min
     beta_max = args.beta_max
     pe_scale = args.pe_scale
+    save_every = args.save_every
 
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -251,7 +253,7 @@ if __name__ == "__main__":
         with open(f'{log_dir}/train.log', 'a') as f:
             f.write(log_msg)
 
-        if epoch % params.save_every > 0:
+        if epoch % args.save_every > 0:
             continue
 
         model.eval()
