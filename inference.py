@@ -21,9 +21,9 @@ from text.symbols import symbols
 from utils import intersperse
 
 import sys
-sys.path.append('./hifi-gan/')
-from env import AttrDict
-from models import Generator as HiFiGAN
+sys.path.append('./hifigan/')
+from hifigan.env import AttrDict
+from hifigan.models import Generator as HiFiGAN
 
 
 HIFIGAN_CONFIG = './checkpts/hifigan-config.json'
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                         params.filter_channels_dp, params.n_heads, params.n_enc_layers,
                         params.enc_kernel, params.enc_dropout, params.window_size,
                         params.n_feats, params.dec_dim, params.beta_min, params.beta_max, params.pe_scale)
-    generator.load_state_dict(torch.load(args.checkpoint, map_location=lambda loc, storage: loc))
+    generator.load_state_dict(torch.load(args.checkpoint, map_location=lambda loc, storage: loc)["model_state_dict"])
     _ = generator.cuda().eval()
     print(f'Number of parameters: {generator.nparams}')
     
@@ -64,6 +64,7 @@ if __name__ == '__main__':
     
     with open(args.file, 'r', encoding='utf-8') as f:
         texts = [line.strip() for line in f.readlines()]
+    # texts = ["This is my thesis", "I want to play a game"]
     cmu = cmudict.CMUDict('./resources/cmu_dictionary')
     
     with torch.no_grad():
